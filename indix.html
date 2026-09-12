@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Synapse Flow - AI Organizer</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --bg-color: #090d16;
+            --card-bg: rgba(18, 26, 43, 0.75);
+            --border-color: rgba(255, 255, 255, 0.1);
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --primary-glow: #6366f1;
+            --secondary-glow: #a855f7;
+            --btn-bg: #4f46e5;
+            --input-bg: rgba(10, 15, 29, 0.85);
+        }
+
+        [data-theme="light"] {
+            --bg-color: #f8fafc;
+            --card-bg: rgba(255, 255, 255, 0.85);
+            --border-color: rgba(0, 0, 0, 0.1);
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --primary-glow: #4f46e5;
+            --secondary-glow: #9333ea;
+            --btn-bg: #4f46e5;
+            --input-bg: #ffffff;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow-x: hidden;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+        }
+
+        /* Ambient Animated Glows */
+        .glow-bg {
+            position: fixed;
+            width: 350px;
+            height: 350px;
+            border-radius: 50%;
+            background: radial-gradient(circle, var(--primary-glow) 0%, rgba(0,0,0,0) 70%);
+            opacity: 0.15;
+            filter: blur(80px);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .glow-1 { top: -80px; left: -80px; }
+        .glow-2 { bottom: -80px; right: -80px; background: radial-gradient(circle, var(--secondary-glow) 0%, rgba(0,0,0,0) 70%); }
+
+        /* Navbar */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .brand-name {
+            font-size: 1.5rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #a855f7 0%, #6366f1 50%, #3b82f6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 20px rgba(99, 102, 241, 0.4);
+            animation: pulseGlow 4s infinite alternate;
+        }
+
+        @keyframes pulseGlow {
+            0% { filter: drop-shadow(0 0 8px rgba(99, 102, 241, 0.4)); }
+            100% { filter: drop-shadow(0 0 16px rgba(168, 85, 247, 0.8)); }
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .theme-toggle-btn {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 8px 14px;
+            border-radius: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .theme-toggle-btn:hover {
+            border-color: var(--primary-glow);
+        }
+
+        /* Hero Section */
+        .hero {
+            text-align: center;
+            padding: 2rem 1rem 1rem 1rem;
+            max-width: 650px;
+            margin: 0 auto;
+        }
+
+        .hero h1 {
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+            font-weight: 800;
+        }
+
+        .hero p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        /* App Main Wrapper - Compact & Centered */
+        .app-container {
+            max-width: 900px;
+            margin: 1rem auto 3rem auto;
+            width: 92%;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .app-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.4rem;
+            backdrop-filter: blur(16px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Mode Selector Tabs */
+        .mode-selector {
+            display: flex;
+            background: var(--input-bg);
+            padding: 4px;
+            border-radius: 10px;
+            margin-bottom: 1.2rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .mode-btn {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 0.8rem;
+        }
+
+        .mode-btn.active {
+            background: var(--btn-bg);
+            color: white;
+            box-shadow: 0 2px 8px rgba(79, 70, 229, 0.4);
+        }
+
+        /* Input Controls */
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            flex-grow: 1;
+        }
+
+        .text-area-input {
+            width: 100%;
+            height: 220px;
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 0.9rem;
+            color: var(--text-main);
+            font-size: 0.9rem;
+            resize: none;
+            outline: none;
+            line-height: 1.5;
+        }
+
+        .text-area-input:focus {
+            border-color: var(--primary-glow);
+        }
+
+        .lines-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 220px;
+            overflow-y: auto;
+        }
+
+        .line-item {
+            display: flex;
+            gap: 6px;
+        }
+
+        .line-input {
+            flex: 1;
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 8px 12px;
+            color: var(--text-main);
+            outline: none;
+            font-size: 0.85rem;
+        }
+
+        .line-input:focus {
+            border-color: var(--primary-glow);
+        }
+
+        .add-line-btn {
+            background: rgba(99, 102, 241, 0.12);
+            color: var(--primary-glow);
+            border: 1px dashed var(--primary-glow);
+            padding: 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        .add-line-btn:hover {
+            background: rgba(99, 102, 241, 0.22);
+        }
+
+        .process-btn {
+            background: linear-gradient(135deg, var(--btn-bg), var(--secondary-glow));
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+        }
+
+        .process-btn:hover {
+            opacity: 0.95;
+            transform: translateY(-1px);
+        }
+
+        /* Output Window */
+        .output-box {
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 1rem;
+            min-height: 220px;
+            flex-grow: 1;
+            white-space: pre-line;
+            line-height: 1.6;
+            font-size: 0.9rem;
+            overflow-y: auto;
+        }
+
+        .output-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 1rem;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            background: var(--card-bg);
+            color: var(--text-main);
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-size: 0.8rem;
+        }
+
+        .action-btn:hover {
+            border-color: var(--primary-glow);
+            color: var(--primary-glow);
+        }
+
+        /* Saved Modal Drawer */
+        .saved-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(4px);
+            z-index: 200;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .saved-content {
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            width: 90%;
+            max-width: 500px;
+            max-height: 75vh;
+            border-radius: 16px;
+            padding: 1.2rem;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .saved-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.8rem;
+        }
+
+        .saved-list {
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+        }
+
+        .saved-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.8rem;
+            position: relative;
+            font-size: 0.85rem;
+        }
+
+        .saved-card .date {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        /* Toast Notifications */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--btn-bg);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: 0.3s;
+            z-index: 300;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="glow-bg glow-1"></div>
+    <div class="glow-bg glow-2"></div>
+
+    <header>
+        <div class="logo-container">
+            <i class="fa-solid fa-brain-circuit" style="font-size: 1.5rem; color: #6366f1;"></i>
+            <span class="brand-name">Synapse Flow</span>
+        </div>
+        
+        <div class="header-actions">
+            <button class="theme-toggle-btn" onclick="openSavedModal()">
+                <i class="fa-solid fa-bookmark"></i> Saved
+            </button>
+            <button class="theme-toggle-btn" id="themeBtn" onclick="toggleTheme()">
+                <i class="fa-solid fa-moon"></i> <span>Dark</span>
+            </button>
+        </div>
+    </header>
+
+    <section class="hero">
+        <h1>Welcome to <span class="brand-name">Synapse Flow</span></h1>
+        <p>Transform unstructured thoughts into clear, structured, and actionable insights with AI precision.</p>
+    </section>
+
+    <main class="app-container">
+        
+        <div class="card">
+            <div class="mode-selector">
+                <button class="mode-btn active" id="btnModeLong" onclick="switchMode('long')">Long Text Mode</button>
+                <button class="mode-btn" id="btnModeLines" onclick="switchMode('lines')">Multiple Lines Mode</button>
+            </div>
+
+            <div class="input-group">
+                <div id="longTextContainer">
+                    <textarea class="text-area-input" id="longTextInput" placeholder="Paste your raw notes or messy text here... Let AI structure it."></textarea>
+                </div>
+
+                <div id="linesTextContainer" style="display: none;">
+                    <div class="lines-container" id="linesList">
+                        <div class="line-item">
+                            <input type="text" class="line-input" placeholder="Separate thought 1">
+                        </div>
+                        <div class="line-item">
+                            <input type="text" class="line-input" placeholder="Separate thought 2">
+                        </div>
+                    </div>
+                    <button class="add-line-btn" onclick="addNewLineField()">
+                        <i class="fa-solid fa-plus"></i> Add Line
+                    </button>
+                </div>
+            </div>
+
+            <button class="process-btn" onclick="processWithAI()">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> Structure with AI
+            </button>
+        </div>
+
+        <div class="card">
+            <h3 style="margin-bottom: 0.8rem; font-size: 0.95rem; color: var(--text-muted);">
+                <i class="fa-solid fa-align-left" style="color: var(--primary-glow);"></i> Organized Result:
+            </h3>
+
+            <div class="output-box" id="outputArea">Structured ideas will appear here, ordered from easiest to most impactful...</div>
+
+            <div class="output-actions">
+                <button class="action-btn" onclick="copyOutput()"><i class="fa-regular fa-copy"></i> Copy</button>
+                <button class="action-btn" onclick="clearAll()"><i class="fa-regular fa-trash-can"></i> Clear</button>
+                <button class="action-btn" onclick="saveOutput()"><i class="fa-regular fa-floppy-disk"></i> Save</button>
+            </div>
+        </div>
+
+    </main>
+
+    <div class="saved-modal" id="savedModal">
+        <div class="saved-content">
+            <div class="saved-header">
+                <h3><i class="fa-solid fa-box-archive"></i> Saved Thoughts</h3>
+                <button class="action-btn" style="flex:none; width: auto; padding: 4px 10px;" onclick="closeSavedModal()">X</button>
+            </div>
+            <div class="saved-list" id="savedListContainer"></div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast">Action completed successfully!</div>
+
+    <script>
+        let currentMode = 'long';
+
+        function toggleTheme() {
+            const body = document.body;
+            const themeBtn = id('themeBtn');
+            if (body.getAttribute('data-theme') === 'light') {
+                body.removeAttribute('data-theme');
+                themeBtn.innerHTML = `<i class="fa-solid fa-moon"></i> <span>Dark</span>`;
+            } else {
+                body.setAttribute('data-theme', 'light');
+                themeBtn.innerHTML = `<i class="fa-solid fa-sun"></i> <span>Light</span>`;
+            }
+        }
+
+        function switchMode(mode) {
+            currentMode = mode;
+            if (mode === 'long') {
+                id('btnModeLong').classList.add('active');
+                id('btnModeLines').classList.remove('active');
+                id('longTextContainer').style.display = 'block';
+                id('linesTextContainer').style.display = 'none';
+            } else {
+                id('btnModeLines').classList.add('active');
+                id('btnModeLong').classList.remove('active');
+                id('linesTextContainer').style.display = 'block';
+                id('longTextContainer').style.display = 'none';
+            }
+        }
+
+        function addNewLineField() {
+            const linesList = id('linesList');
+            const count = linesList.children.length + 1;
+            const div = document.createElement('div');
+            div.className = 'line-item';
+            div.innerHTML = `<input type="text" class="line-input" placeholder="Separate thought ${count}">`;
+            linesList.appendChild(div);
+            linesList.scrollTop = linesList.scrollHeight;
+        }
+
+        function processWithAI() {
+            let collectedText = [];
+
+            if (currentMode === 'long') {
+                const val = id('longTextInput').value.trim();
+                if (!val) { showToast('Please input text first'); return; }
+                collectedText = val.split('\n').filter(t => t.trim() !== '');
+            } else {
+                const inputs = document.querySelectorAll('.line-input');
+                inputs.forEach(input => {
+                    if (input.value.trim() !== '') collectedText.push(input.value.trim());
+                });
+                if (collectedText.length === 0) { showToast('Please enter lines first'); return; }
+            }
+
+            id('outputArea').innerText = 'Analyzing and structuring thoughts with AI...';
+
+            setTimeout(() => {
+                let formattedResult = "✨ **Structured Insights (Easiest to Most Impactful):**\n\n";
+                
+                collectedText.sort((a, b) => a.length - b.length);
+
+                collectedText.forEach((item, index) => {
+                    let levelTag = index === 0 ? "🟢 [Quick Win]" : (index === collectedText.length - 1 ? "🚀 [Ultimate Goal]" : "🔵 [Core Step]");
+                    formattedResult += `${index + 1}. ${levelTag}\n   👉 ${item}\n\n`;
+                });
+
+                formattedResult += "💡 **Action Plan:** Text converted into clear sequential execution steps.";
+                id('outputArea').innerText = formattedResult;
+                showToast('Structured successfully!');
+            }, 1000);
+        }
+
+        function copyOutput() {
+            const text = id('outputArea').innerText;
+            if(!text || text.includes('Structured ideas will appear')) return;
+            navigator.clipboard.writeText(text);
+            showToast('Copied to clipboard!');
+        }
+
+        function clearAll() {
+            id('longTextInput').value = '';
+            id('linesList').innerHTML = `
+                <div class="line-item"><input type="text" class="line-input" placeholder="Separate thought 1"></div>
+                <div class="line-item"><input type="text" class="line-input" placeholder="Separate thought 2"></div>
+            `;
+            id('outputArea').innerText = 'Structured ideas will appear here, ordered from easiest to most impactful...';
+            showToast('Cleared!');
+        }
+
+        function saveOutput() {
+            const text = id('outputArea').innerText;
+            if(!text || text.includes('Structured ideas will appear') || text.includes('Analyzing and structuring')) return;
+
+            let savedData = JSON.parse(localStorage.getItem('synapse_saved') || '[]');
+            savedData.unshift({
+                id: Date.now(),
+                date: new Date().toLocaleString('en-US'),
+                content: text
+            });
+
+            localStorage.setItem('synapse_saved', JSON.stringify(savedData));
+            showToast('Saved successfully!');
+        }
+
+        function openSavedModal() {
+            const modal = id('savedModal');
+            const listContainer = id('savedListContainer');
+            let savedData = JSON.parse(localStorage.getItem('synapse_saved') || '[]');
+
+            if(savedData.length === 0) {
+                listContainer.innerHTML = '<p style="text-align:center; color: var(--text-muted);">No saved entries yet.</p>';
+            } else {
+                listContainer.innerHTML = savedData.map(item => `
+                    <div class="saved-card">
+                        <div class="date">${item.date}</div>
+                        <div style="white-space: pre-line;">${item.content}</div>
+                        <button onclick="deleteSaved(${item.id})" style="position: absolute; top: 10px; right: 10px; background: none; border: none; color: #ef4444; cursor: pointer;"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                `).join('');
+            }
+            modal.style.display = 'flex';
+        }
+
+        function closeSavedModal() {
+            id('savedModal').style.display = 'none';
+        }
+
+        function deleteSaved(itemId) {
+            let savedData = JSON.parse(localStorage.getItem('synapse_saved') || '[]');
+            savedData = savedData.filter(i => i.id !== itemId);
+            localStorage.setItem('synapse_saved', JSON.stringify(savedData));
+            openSavedModal();
+            showToast('Deleted');
+        }
+
+        function showToast(msg) {
+            const toast = id('toast');
+            toast.innerText = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2500);
+        }
+
+        function id(elemId) { return document.getElementById(elemId); }
+    </script>
+</body>
+</html>
