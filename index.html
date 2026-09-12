@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TeamPulse AI — AutoFlow</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: { sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'] },
+        colors: {
+          brand: {
+            50: '#eef2ff', 400: '#818cf8', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca'
+          }
+        },
+        keyframes: {
+          fadeUp: { '0%': { opacity: 0, transform: 'translateY(8px)' }, '100%': { opacity: 1, transform: 'translateY(0)' } }
+        },
+        animation: { fadeUp: 'fadeUp 0.4s ease-out both' }
+      }
+    }
+  };
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  body { font-family: 'Inter', ui-sans-serif, system-ui, sans-serif; }
+  .stagger > * { animation: fadeUp 0.45s ease-out both; }
+  .stagger > *:nth-child(1) { animation-delay: .02s; }
+  .stagger > *:nth-child(2) { animation-delay: .08s; }
+  .stagger > *:nth-child(3) { animation-delay: .14s; }
+  .stagger > *:nth-child(4) { animation-delay: .2s; }
+  .stagger > *:nth-child(5) { animation-delay: .26s; }
+  .stagger > *:nth-child(6) { animation-delay: .32s; }
+  ::-webkit-scrollbar { height: 8px; width: 8px; }
+  ::-webkit-scrollbar-thumb { background: #334155; border-radius: 999px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+</style>
+</head>
+<body class="min-h-screen bg-slate-950 text-slate-100 antialiased">
+
+  <!-- Header -->
+  <header class="sticky top-0 z-20 border-b border-slate-800/80 bg-slate-950/90 backdrop-blur">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="h-10 w-10 shrink-0 rounded-xl bg-gradient-to-br from-brand-500 to-violet-600 flex items-center justify-center shadow-lg shadow-brand-900/40">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-lg font-bold tracking-tight text-white">TeamPulse AI</h1>
+            <span class="hidden sm:inline-block text-[11px] font-semibold uppercase tracking-wider text-brand-300 bg-brand-500/10 border border-brand-500/20 px-2 py-0.5 rounded-full">AutoFlow</span>
+          </div>
+          <p class="text-xs text-slate-400 -mt-0.5">Turn unstructured notes into structured action plans</p>
+        </div>
+      </div>
+      <button id="run-demo-btn" class="inline-flex items-center gap-2 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-100 text-sm font-medium px-3.5 py-2 transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+        <span class="hidden sm:inline">Run Demo</span>
+        <span class="sm:hidden">Demo</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-8">
+
+    <!-- Input Section -->
+    <section class="rounded-2xl border border-slate-800 bg-slate-900/60 p-5 sm:p-6 shadow-xl shadow-black/20">
+      <div class="flex items-center justify-between mb-3">
+        <label for="transcript-input" class="text-sm font-semibold text-slate-200">Source Material</label>
+        <span id="char-count" class="text-xs text-slate-500">0 characters</span>
+      </div>
+      <textarea id="transcript-input" rows="9"
+        class="w-full resize-y rounded-xl bg-slate-950 border border-slate-700 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30 outline-none p-4 text-sm leading-relaxed text-slate-100 placeholder:text-slate-500 transition"
+        placeholder="Paste meeting transcript, minutes, or raw project updates here..."></textarea>
+
+      <div class="flex flex-col sm:flex-row gap-3 mt-4">
+        <button id="load-sample-btn" class="inline-flex items-center justify-center gap-2 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-sm font-medium px-4 py-2.5 transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 15h6M9 11h2"/></svg>
+          Load Sample Transcript
+        </button>
+        <button id="analyze-btn" class="sm:ml-auto inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-brand-600 to-violet-600 hover:from-brand-500 hover:to-violet-500 text-white text-sm font-semibold px-5 py-2.5 shadow-lg shadow-brand-900/40 transition">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3m0 12v3m9-9h-3M6 12H3m14.5-6.5-2 2m-9 9-2 2m0-13 2 2m9 9 2 2"/></svg>
+          Analyze &amp; Generate Workflow
+        </button>
+      </div>
+      <p id="input-error" class="hidden text-sm text-rose-400 mt-3">Please paste some text or load the sample transcript before analyzing.</p>
+    </section>
+
+    <!-- Loading State -->
+    <section id="loading-state" class="hidden rounded-2xl border border-slate-800 bg-slate-900/60 p-10">
+      <div class="flex flex-col items-center justify-center gap-4 text-center">
+        <div class="relative h-12 w-12">
+          <div class="absolute inset-0 rounded-full border-4 border-slate-700"></div>
+          <div class="absolute inset-0 rounded-full border-4 border-brand-500 border-t-transparent animate-spin"></div>
+        </div>
+        <div>
+          <p class="text-slate-100 font-semibold">Analyzing transcript with TeamPulse AI…</p>
+          <p id="loading-substep" class="text-sm text-slate-400 mt-1">Extracting key decisions</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Output Dashboard -->
+    <section id="output-dashboard" class="hidden space-y-8">
+
+      <!-- Stats -->
+      <div class="grid grid-cols-3 gap-3 sm:gap-4 stagger">
+        <div class="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
+          <p class="text-2xl font-bold text-white" id="stat-actions">0</p>
+          <p class="text-xs text-slate-400 mt-0.5">Action Items</p>
+        </div>
+        <div class="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
+          <p class="text-2xl font-bold text-rose-400" id="stat-high">0</p>
+          <p class="text-xs text-slate-400 mt-0.5">High Priority</p>
+        </div>
+        <div class="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
+          <p class="text-2xl font-bold text-emerald-400" id="stat-owners">0</p>
+          <p class="text-xs text-slate-400 mt-0.5">Owners Identified</p>
+        </div>
+      </div>
+
+      <!-- Executive Summary -->
+      <div class="rounded-2xl border border-slate-800 bg-slate-900/60 p-5 sm:p-6">
+        <div class="flex items-center gap-2 mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-brand-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          <h2 class="text-base font-semibold text-white">Executive Summary</h2>
+        </div>
+        <ul id="summary-list" class="space-y-3"></ul>
+      </div>
+
+      <!-- Action Item Board -->
+      <div class="rounded-2xl border border-slate-800 bg-slate-900/60 p-5 sm:p-6">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-brand-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+            <h2 class="text-base font-semibold text-white">Action Item Board</h2>
+          </div>
+          <span class="text-xs text-slate-500">Click a card to mark complete</span>
+        </div>
+        <div id="action-board" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"></div>
+      </div>
+
+      <!-- Email Draft -->
+      <div class="rounded-2xl border border-slate-800 bg-slate-900/60 p-5 sm:p-6">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-brand-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 6-10 7L2 6"/></svg>
+            <h2 class="text-base font-semibold text-white">Automated Follow-up Email Draft</h2>
+          </div>
+          <button id="copy-email-btn" class="inline-flex items-center gap-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-medium px-3 py-1.5 transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            <span id="copy-email-label">Copy to Clipboard</span>
+          </button>
+        </div>
+        <div class="rounded-xl border border-slate-700/70 bg-slate-950 p-5">
+          <pre id="email-draft" class="whitespace-pre-wrap font-sans text-sm text-slate-300 leading-relaxed"></pre>
+        </div>
+      </div>
+
+    </section>
+  </main>
+
+  <footer class="border-t border-slate-800/80 py-6 mt-4">
+    <p class="text-center text-xs text-slate-500">TeamPulse AI · AutoFlow — enterprise workflow automation, simulated locally in your browser.</p>
+  </footer>
+
+<script>
+(function () {
+  const SAMPLE_TRANSCRIPT = `Sprint Planning & Status Sync — Thursday 10:00 AM
+
+Sarah opened the call by reviewing the sprint deadline. The team agreed that the current sprint will be extended by two days because of the API blocker discovered on Tuesday.
+
+Mike explained that the payments API integration is blocked because the vendor's staging environment keeps returning 500 errors. Mike will escalate the issue with the vendor and needs to fix the retry logic by Friday.
+
+The team decided that Elena will own the backend refactor and should complete the database migration by end of day Monday. This is critical and considered high priority since it blocks the mobile release.
+
+David raised concerns about the marketing deliverables. The team confirmed that David will prepare the launch announcement and must send the draft to legal for review by next Wednesday. This is medium priority but should not slip further.
+
+Priya agreed to update the QA test plan and needs to review the regression suite before the release candidate is cut. This can happen when possible and is considered low priority for now.
+
+Finally, the group approved moving the customer webinar to next week. Sarah will schedule the webinar and follow up with the events team by tomorrow. Everyone agreed the rollout communication plan needs one more pass before it goes out.`;
+
+  const els = {
+    input: document.getElementById('transcript-input'),
+    charCount: document.getElementById('char-count'),
+    inputError: document.getElementById('input-error'),
+    loadSampleBtn: document.getElementById('load-sample-btn'),
+    analyzeBtn: document.getElementById('analyze-btn'),
+    runDemoBtn: document.getElementById('run-demo-btn'),
+    loading: document.getElementById('loading-state'),
+    loadingSubstep: document.getElementById('loading-substep'),
+    dashboard: document.getElementById('output-dashboard'),
+    summaryList: document.getElementById('summary-list'),
+    actionBoard: document.getElementById('action-board'),
+    emailDraft: document.getElementById('email-draft'),
+    copyBtn: document.getElementById('copy-email-btn'),
+    copyLabel: document.getElementById('copy-email-label'),
+    statActions: document.getElementById('stat-actions'),
+    statHigh: document.getElementById('stat-high'),
+    statOwners: document.getElementById('stat-owners'),
+  };
+
+  const STOPWORD_CAPS = new Set([
+    'The','This','That','These','Those','We','They','It','Our','For','Next','After','Before',
+    'Once','When','If','As','Because','So','Also','Then','Please','I','You','He','She','Team',
+    'Sprint','Marketing','Engineering','Monday','Tuesday','Wednesday','Thursday','Friday',
+    'Saturday','Sunday','January','February','March','April','May','June','July','August',
+    'September','October','November','December','Finally','Everyone','Someone','API','QA','UI',
+    'Overall','Meanwhile','However','Additionally','Today','Tomorrow'
+  ]);
+
+  const ACTION_TRIGGERS = [
+    'will ', 'need to', 'needs to', 'must ', 'should ', 'going to', 'plan to', 'follow up',
+    'follow-up', 'fix ', 'complete ', 'finish ', 'prepare ', 'send ', 'review ', 'update ',
+    'schedule ', 'resolve ', 'deliver ', 'own ', 'escalate'
+  ];
+
+  const HIGH_KEYWORDS = ['blocker', 'blocked', 'urgent', 'asap', 'critical', 'immediately', 'high priority', 'escalate', 'breaking'];
+  const MEDIUM_KEYWORDS = ['should', 'plan to', 'medium priority', 'important', 'need to', 'needs to'];
+  const LOW_KEYWORDS = ['eventually', 'low priority', 'nice to have', 'when possible', 'minor'];
+
+  const DEADLINE_PATTERNS = [
+    /\bby\s+(end of day\s+)?(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/i,
+    /\b(end of day|eod)\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/i,
+    /\bnext\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday|week)\b/i,
+    /\b(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/i,
+    /\b(today|tomorrow|tonight)\b/i,
+    /\bend of (day|week)\b/i,
+    /\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+\d{1,2}(st|nd|rd|th)?\b/i,
+    /\b\d{1,2}\/\d{1,2}(\/\d{2,4})?\b/
+  ];
+
+  function splitSentences(text) {
+    return text
+      .replace(/\s+/g, ' ')
+      .split(/(?<=[.!?])\s+|\n+/)
+      .map(s => s.trim())
+      .filter(s => s.length > 12);
+  }
+
+  function extractOwner(sentence) {
+    const matches = sentence.match(/\b[A-Z][a-z]+\b/g) || [];
+    for (const m of matches) {
+      if (!STOPWORD_CAPS.has(m)) return m;
+    }
+    return 'Unassigned';
+  }
+
+  function extractDeadline(sentence) {
+    for (const pattern of DEADLINE_PATTERNS) {
+      const m = sentence.match(pattern);
+      if (m) {
+        return m[0].replace(/^by\s+/i, '').replace(/\b\w/g, c => c.toUpperCase());
+      }
+    }
+    return 'TBD';
+  }
+
+  function extractPriority(sentence, fallbackIndex) {
+    const lower = sentence.toLowerCase();
+    if (HIGH_KEYWORDS.some(k => lower.includes(k))) return 'High';
+    if (LOW_KEYWORDS.some(k => lower.includes(k))) return 'Low';
+    if (MEDIUM_KEYWORDS.some(k => lower.includes(k))) return 'Medium';
+    const rotation = ['Medium', 'High', 'Low'];
+    return rotation[fallbackIndex % rotation.length];
+  }
+
+  function cleanTask(sentence) {
+    let s = sentence.replace(/^(and|but|so|then|also|finally|meanwhile)\s+/i, '');
+    s = s.charAt(0).toUpperCase() + s.slice(1);
+    s = s.replace(/[.,;]+$/, '');
+    if (s.length > 110) s = s.slice(0, 107).trimEnd() + '…';
+    return s;
+  }
+
+  function parseTranscript(text) {
+    const sentences = splitSentences(text);
+
+    let actionSentences = sentences.filter(s => {
+      const lower = s.toLowerCase();
+      return ACTION_TRIGGERS.some(k => lower.includes(k));
+    });
+
+    if (actionSentences.length < 3) {
+      const remaining = sentences.filter(s => !actionSentences.includes(s));
+      const supplement = remaining
+        .sort((a, b) => b.length - a.length)
+        .slice(0, 3 - actionSentences.length);
+      actionSentences = actionSentences.concat(supplement);
+    }
+    actionSentences = actionSentences.slice(0, 6);
+
+    const actions = actionSentences.map((s, i) => ({
+      task: cleanTask(s),
+      owner: extractOwner(s),
+      priority: extractPriority(s, i),
+      deadline: extractDeadline(s),
+    }));
+
+    const decisionSentences = sentences.filter(s => /\b(decided|agreed|confirmed|approved|will extend|concluded)\b/i.test(s));
+    let summarySource = decisionSentences.length >= 3 ? decisionSentences : sentences;
+    const summary = summarySource
+      .filter((s, i, arr) => arr.indexOf(s) === i)
+      .sort((a, b) => b.length - a.length)
+      .slice(0, 3)
+      .map(cleanTask);
+
+    while (summary.length < 3) summary.push('No further key decisions were detected in this input.');
+
+    return { summary, actions };
+  }
+
+  function priorityBadge(priority) {
+    const styles = {
+      High: 'bg-rose-500/15 text-rose-300 border-rose-500/30',
+      Medium: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
+      Low: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
+    };
+    return `<span class="inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wide px-2 py-1 rounded-full border ${styles[priority]}">${priority}</span>`;
+  }
+
+  function renderSummary(summary) {
+    els.summaryList.innerHTML = summary.map(point => `
+      <li class="flex items-start gap-3">
+        <span class="mt-0.5 h-5 w-5 shrink-0 rounded-full bg-brand-500/15 text-brand-300 flex items-center justify-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </span>
+        <span class="text-sm text-slate-300 leading-relaxed">${point}</span>
+      </li>
+    `).join('');
+  }
+
+  function renderBoard(actions) {
+    els.actionBoard.innerHTML = actions.map((a, i) => `
+      <div data-idx="${i}" class="action-card group cursor-pointer rounded-xl border border-slate-700/70 bg-slate-950 hover:border-brand-500/50 p-4 transition-colors">
+        <div class="flex items-start justify-between gap-2 mb-3">
+          ${priorityBadge(a.priority)}
+          <input type="checkbox" class="done-checkbox h-4 w-4 rounded border-slate-600 bg-slate-800 text-brand-500 focus:ring-brand-500/40 cursor-pointer" title="Mark complete">
+        </div>
+        <p class="task-text text-sm font-medium text-slate-100 leading-snug mb-4">${a.task}</p>
+        <div class="flex items-center justify-between text-xs text-slate-400">
+          <span class="inline-flex items-center gap-1.5">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            ${a.owner}
+          </span>
+          <span class="inline-flex items-center gap-1.5">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+            ${a.deadline}
+          </span>
+        </div>
+      </div>
+    `).join('');
+
+    els.actionBoard.querySelectorAll('.action-card').forEach(card => {
+      const checkbox = card.querySelector('.done-checkbox');
+      const taskText = card.querySelector('.task-text');
+      const toggle = () => {
+        const done = checkbox.checked;
+        taskText.classList.toggle('line-through', done);
+        taskText.classList.toggle('text-slate-500', done);
+        card.classList.toggle('opacity-60', done);
+      };
+      card.addEventListener('click', (e) => {
+        if (e.target !== checkbox) checkbox.checked = !checkbox.checked;
+        toggle();
+      });
+    });
+  }
+
+  function buildEmail(summary, actions) {
+    const dateStr = new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+    const decisionLines = summary.map(s => `  • ${s}`).join('\n');
+    const actionLines = actions
+      .map((a, i) => `  ${i + 1}. ${a.task}\n     Owner: ${a.owner}   |   Priority: ${a.priority}   |   Due: ${a.deadline}`)
+      .join('\n\n');
+
+    return `Subject: Action Items & Next Steps — Meeting Recap (${dateStr})
+
+Hi team,
+
+Thanks for a productive discussion today. Below is a summary of the key decisions made, along with the action items we've committed to going forward.
+
+Key Decisions:
+${decisionLines}
+
+Action Items:
+${actionLines}
+
+Please review your assigned items above and flag any blockers as soon as possible. If priorities or deadlines need to be adjusted, reply here so we can realign the plan.
+
+Best regards,
+TeamPulse AI (on behalf of the team)`;
+  }
+
+  function renderDashboard(text) {
+    const { summary, actions } = parseTranscript(text);
+    renderSummary(summary);
+    renderBoard(actions);
+    els.emailDraft.textContent = buildEmail(summary, actions);
+
+    els.statActions.textContent = actions.length;
+    els.statHigh.textContent = actions.filter(a => a.priority === 'High').length;
+    els.statOwners.textContent = new Set(actions.map(a => a.owner).filter(o => o !== 'Unassigned')).size;
+  }
+
+  function runAnalysis() {
+    const text = els.input.value.trim();
+    if (!text) {
+      els.inputError.classList.remove('hidden');
+      els.input.focus();
+      return;
+    }
+    els.inputError.classList.add('hidden');
+    els.dashboard.classList.add('hidden');
+    els.loading.classList.remove('hidden');
+    els.loading.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+    const substeps = ['Extracting key decisions', 'Identifying owners & deadlines', 'Scoring priority', 'Drafting follow-up email'];
+    let step = 0;
+    const stepInterval = setInterval(() => {
+      step = (step + 1) % substeps.length;
+      els.loadingSubstep.textContent = substeps[step];
+    }, 380);
+
+    setTimeout(() => {
+      clearInterval(stepInterval);
+      renderDashboard(text);
+      els.loading.classList.add('hidden');
+      els.dashboard.classList.remove('hidden');
+      els.dashboard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 1500);
+  }
+
+  els.input.addEventListener('input', () => {
+    els.charCount.textContent = `${els.input.value.length} characters`;
+    if (els.input.value.trim()) els.inputError.classList.add('hidden');
+  });
+
+  els.loadSampleBtn.addEventListener('click', () => {
+    els.input.value = SAMPLE_TRANSCRIPT;
+    els.charCount.textContent = `${els.input.value.length} characters`;
+    els.inputError.classList.add('hidden');
+    els.input.focus();
+  });
+
+  els.analyzeBtn.addEventListener('click', runAnalysis);
+
+  els.runDemoBtn.addEventListener('click', () => {
+    els.input.value = SAMPLE_TRANSCRIPT;
+    els.charCount.textContent = `${els.input.value.length} characters`;
+    runAnalysis();
+  });
+
+  els.copyBtn.addEventListener('click', async () => {
+    const text = els.emailDraft.textContent;
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch (e) {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    }
+    els.copyLabel.textContent = 'Copied!';
+    els.copyBtn.classList.add('border-emerald-500/50', 'text-emerald-300');
+    setTimeout(() => {
+      els.copyLabel.textContent = 'Copy to Clipboard';
+      els.copyBtn.classList.remove('border-emerald-500/50', 'text-emerald-300');
+    }, 2000);
+  });
+})();
+</script>
+</body>
+</html>
